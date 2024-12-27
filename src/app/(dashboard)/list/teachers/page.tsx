@@ -10,7 +10,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { object } from "zod";
 
-
 type TeacherListTypes = Teacher & { subjects: Subject[] } & {
   classes: Class[];
 };
@@ -102,41 +101,42 @@ const TeacherListPage = async ({
   searchParams: { [key: string]: string | undefined };
 }) => {
   const { page, ...queryParams } = searchParams;
-  const p = page ? parseInt(page) :1;
+  const p = page ? parseInt(page) : 1;
 
   // URL PARAMS CONDITIONS
 
-  const query: Prisma.TeacherWhereInput = {}
+  const query: Prisma.TeacherWhereInput = {};
 
-  if(queryParams){
-    for(const [key, value] of Object.entries(queryParams)){
-      if(value !== undefined){
-      switch(key){
-        case "classId":
-          query.lessons = {some:{classId:parseInt(value)}}}
+  if (queryParams) {
+    for (const [key, value] of Object.entries(queryParams)) {
+      if (value !== undefined) {
+        switch (key) {
+          case "classId":
+            query.lessons = { some: { classId: parseInt(value) } };
+            break;
+          case "search":
+            query.name = { contains: value, mode: "insensitive" };
+        }
+      }
     }
   }
 
   // fetch teaacher data
   const [data, count] = await prisma.$transaction([
-  
-   prisma.teacher.findMany({
-    where: query,
-    include: {
-      subjects: true,
-      classes: true,
-    },
-    take: ITEM_PER_PAGE,
-    skip: ITEM_PER_PAGE * (p - 1 ),
-  }),
-  prisma.teacher.count({where: query}),
-  
-  ]); 
+    prisma.teacher.findMany({
+      where: query,
+      include: {
+        subjects: true,
+        classes: true,
+      },
+      take: ITEM_PER_PAGE,
+      skip: ITEM_PER_PAGE * (p - 1),
+    }),
+    prisma.teacher.count({ where: query }),
+  ]);
   console.log(count);
-  
-  
-  // console.log(data); 
-  
+
+  // console.log(data);
 
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
